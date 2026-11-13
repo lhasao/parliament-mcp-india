@@ -11,15 +11,7 @@ Built by [CitizenView](https://app.citizenview.in). Data from
 
 ## Connect
 
-**Easiest: the hosted server, nothing to install.** Add this URL in your AI tool's MCP / connector settings:
-
-```
-https://mcp.citizenview.in/mcp
-```
-
-Claude Code: `claude mcp add --transport http parliament-india https://mcp.citizenview.in/mcp`
-
-**Run it yourself** with [uv](https://docs.astral.sh/uv/), one command:
+Run it with [uv](https://docs.astral.sh/uv/), one command, no cloning:
 
 ```sh
 uvx --from git+https://github.com/lhasao/parliament-mcp-india parliament-mcp-india
@@ -30,6 +22,8 @@ Claude Desktop (`claude_desktop_config.json`):
 ```json
 { "mcpServers": { "parliament-india": { "command": "uvx", "args": ["--from", "git+https://github.com/lhasao/parliament-mcp-india", "parliament-mcp-india"] } } }
 ```
+
+Claude Code: `claude mcp add parliament-india -- uvx --from git+https://github.com/lhasao/parliament-mcp-india parliament-mcp-india`
 
 ## What it answers
 
@@ -46,13 +40,17 @@ Covers the 18th Lok Sabha, current Rajya Sabha members and all parliamentary com
 linked to a committee only when that committee's own PRS page names it. "Relevant" means the MP
 sits on the committee examining the bill — not that they support it. No contact details are included.
 
-## Protections (hosted server)
+## Running it as a web service
+
+`parliament-mcp-india --http --port 8000` serves MCP at `/mcp` with these protections:
+
 
 - Only `POST /mcp` serves MCP; `GET /` and `/health` return a short info page; everything else is refused.
 - Per-client rate limit: 60 requests a minute with bursts of 20 (`RATE_LIMIT_PER_MINUTE`, `RATE_LIMIT_BURST`).
-  It's held in memory, so it applies per running instance; add a Vercel Firewall rate-limit rule for a global cap.
+  It's held in memory, per running instance. Behind a trusted reverse proxy, set `TRUST_PROXY_HEADERS=1` so it keys on the real client IP.
 - Request bodies capped at 64 KB; tool inputs length-limited.
-- The MCP SDK's host and origin checks (DNS-rebinding protection). Extra hosts: `MCP_ALLOWED_HOSTS`.
+- The MCP SDK's host and origin checks (DNS-rebinding protection). Only localhost is allowed by default;
+  add your domain with `MCP_ALLOWED_HOSTS` (and browser origins with `MCP_ALLOWED_ORIGINS`).
 - Security headers on every response. The service is read-only and holds no secrets.
 
 ## Develop
@@ -61,26 +59,20 @@ sits on the committee examining the bill — not that they support it. No contac
 uv venv --python 3.12 && source .venv/bin/activate && uv pip install -e .
 python -m unittest discover -s tests          # unit and HTTP-protection tests
 python tests/fixtures/smoke_test_client.py    # real client over stdio
-parliament-mcp-india --http --port 8000 &     # local web server with the hosted protections
+parliament-mcp-india --http --port 8000 &     # local web server with its protections
 python tests/fixtures/smoke_test_http.py      # real client over HTTP
 ```
 
 ## Refresh the data
 
 Run around parliamentary sessions. It waits 10 seconds between requests, as PRS's robots.txt asks,
-so a full run takes about 25 minutes. Then redeploy.
+so a full run takes about 25 minutes.
 
 ```sh
 python -m parliament_mcp_india.ingest --bills ../citizenview/src/data/bill-timelines.json \
     --out src/parliament_mcp_india/dataset/parliament.json --cache /tmp/prs-cache
 python -m parliament_mcp_india.export_site --out ../citizenview/src/data/bill-mps.json   # MPs on CitizenView bill pages
 ```
-
-## Hosting
-
-Deployed on Vercel from this repo: `app.py` exposes the app, `vercel.json` sets a 10-second limit.
-Each request runs its own stateless MCP session, so no startup hook or shared state is needed.
-Registry listing: `server.json` (official MCP Registry, name `in.citizenview/parliament-mcp-india`).
 
 ## License
 

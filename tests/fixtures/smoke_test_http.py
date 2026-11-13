@@ -2,7 +2,7 @@
 
 Start the server first (`parliament-mcp-india --http --port 8000`), then:
     python tests/fixtures/smoke_test_http.py [url]
-The default URL is http://localhost:8000/mcp. Pass https://mcp.citizenview.in/mcp to test the live service.
+The default URL is http://localhost:8000/mcp.
 """
 
 import asyncio

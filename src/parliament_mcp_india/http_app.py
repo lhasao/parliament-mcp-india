@@ -9,7 +9,7 @@ Protections, in the order a request meets them:
      service holds no secrets.
 
 Each request gets its own stateless session manager, so the service needs no startup hook and
-no shared session state, which suits serverless hosting.
+no shared session state; it runs the same behind uvicorn or a serverless host.
 """
 
 from __future__ import annotations
@@ -27,11 +27,11 @@ from . import __version__
 from .server import _data, server
 
 MCP_PATH = "/mcp"
-PUBLIC_URL = "https://mcp.citizenview.in/mcp"
 MAX_BODY_BYTES = 64 * 1024
 RATE_PER_MINUTE = float(os.environ.get("RATE_LIMIT_PER_MINUTE", "60"))
 RATE_BURST = float(os.environ.get("RATE_LIMIT_BURST", "20"))
-ON_VERCEL = os.environ.get("VERCEL") == "1"
+# Behind a reverse proxy you trust (it sets X-Forwarded-For), rate limits can key on the real client IP.
+TRUST_PROXY_HEADERS = os.environ.get("TRUST_PROXY_HEADERS") == "1"
 
 # One manager per request means the SDK logs start/stop lines on every call; keep only warnings and errors.
 logging.getLogger("mcp.server.streamable_http_manager").setLevel(logging.WARNING)
@@ -43,20 +43,15 @@ SECURITY_HEADERS = [
 ]
 
 
-def allowed_hosts() -> list[str]:
-    hosts = ["mcp.citizenview.in", "localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*"]
-    for var in ("VERCEL_URL", "VERCEL_BRANCH_URL", "VERCEL_PROJECT_PRODUCTION_URL"):
-        if os.environ.get(var):
-            hosts.append(os.environ[var])
-    hosts += [h.strip() for h in os.environ.get("MCP_ALLOWED_HOSTS", "").split(",") if h.strip()]
-    return hosts
+def _env_list(name: str) -> list[str]:
+    return [v.strip() for v in os.environ.get(name, "").split(",") if v.strip()]
 
 
 SECURITY = TransportSecuritySettings(
     enable_dns_rebinding_protection=True,
-    allowed_hosts=allowed_hosts(),
-    allowed_origins=["https://mcp.citizenview.in", "https://app.citizenview.in",
-                     "http://localhost:*", "http://127.0.0.1:*"],
+    # Add your own domain via MCP_ALLOWED_HOSTS (e.g. "mcp.example.org") when exposing this publicly.
+    allowed_hosts=["localhost", "localhost:*", "127.0.0.1", "127.0.0.1:*"] + _env_list("MCP_ALLOWED_HOSTS"),
+    allowed_origins=["http://localhost:*", "http://127.0.0.1:*"] + _env_list("MCP_ALLOWED_ORIGINS"),
 )
 
 
@@ -94,8 +89,8 @@ def _header(scope: dict, name: bytes) -> str | None:
 
 
 def client_key(scope: dict) -> str:
-    # Proxy headers are only trustworthy behind Vercel, which sets them; locally they could be forged.
-    if ON_VERCEL:
+    # Proxy headers can be forged unless a trusted proxy sets them.
+    if TRUST_PROXY_HEADERS:
         real = _header(scope, b"x-real-ip") or (_header(scope, b"x-forwarded-for") or "").split(",")[0].strip()
         if real:
             return real
@@ -142,7 +137,7 @@ def info() -> dict:
     return {
         "name": "Parliament MCP (India)",
         "version": __version__,
-        "mcp_endpoint": PUBLIC_URL,
+        "mcp_endpoint": MCP_PATH,
         "transport": "streamable-http",
         "data_retrieved_on": d.retrieved_on,
         "attribution": d.attribution,
@@ -171,7 +166,7 @@ async def app(scope, receive, send):
         return await _json(send, 200, info())
 
     if path.rstrip("/") != MCP_PATH:
-        return await _json(send, 404, {"error": "Not found", "mcp_endpoint": PUBLIC_URL})
+        return await _json(send, 404, {"error": "Not found", "mcp_endpoint": MCP_PATH})
 
     if method != "POST":
         return await _json(send, 405, {"error": "This server accepts MCP requests by POST only"}, [(b"allow", b"POST")])

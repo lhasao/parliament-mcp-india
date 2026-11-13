@@ -46,7 +46,7 @@ class HttpAppTests(unittest.TestCase):
     def test_info_page_and_security_headers(self):
         status, headers, body = call("GET", "/", headers={"host": "localhost:8000"})
         self.assertEqual(status, 200)
-        self.assertEqual(json.loads(body)["mcp_endpoint"], "https://mcp.citizenview.in/mcp")
+        self.assertEqual(json.loads(body)["mcp_endpoint"], "/mcp")
         self.assertEqual(headers["x-content-type-options"], "nosniff")
 
     def test_unknown_path_and_wrong_methods(self):
@@ -76,7 +76,7 @@ class HttpAppTests(unittest.TestCase):
         self.assertGreaterEqual(status, 400)
 
     def test_allowed_origin_passes(self):
-        status, _, _ = call("POST", "/mcp", rpc("tools/list"), headers={**MCP_HEADERS, "origin": "https://app.citizenview.in"})
+        status, _, _ = call("POST", "/mcp", rpc("tools/list"), headers={**MCP_HEADERS, "origin": "http://localhost:3000"})
         self.assertEqual(status, 200)
 
     def test_oversized_body_refused_by_content_length(self):
