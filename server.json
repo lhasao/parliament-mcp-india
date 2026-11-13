@@ -1,0 +1,14 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "in.citizenview/parliament-mcp-india",
+  "title": "Parliament MCP (India)",
+  "description": "India's current MPs, parliamentary committees, and which committee is examining each bill.",
+  "version": "1.0.0",
+  "websiteUrl": "https://app.citizenview.in",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.citizenview.in/mcp"
+    }
+  ]
+}

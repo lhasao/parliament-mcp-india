@@ -1,0 +1,39 @@
+{
+  "schema_version": 2,
+  "note": "Synthetic fixture for tests only. No real MP or committee is represented.",
+  "retrieved_on": "2026-01-01",
+  "attribution": "Synthetic test data.",
+  "members": [
+    {"id": "ls-fictional-one", "name": "A. Fictional Member", "house": "Lok Sabha", "party": "Fictional Party A", "state": "Fictional State", "constituency": "Fictional North", "profile_url": "https://example.invalid/one", "prs_image_id": "1", "permissions": {"retrieval": "allowed", "redistribution": "allowed"}},
+    {"id": "rs-fictional-two", "name": "B. Fictional Member", "house": "Rajya Sabha", "party": "Fictional Party B", "state": "Fictional State", "constituency": null, "profile_url": "https://example.invalid/two", "prs_image_id": "2", "permissions": {"retrieval": "allowed", "redistribution": "allowed"}},
+    {"id": "ls-fictional-withheld", "name": "C. Withheld Member", "house": "Lok Sabha", "party": "Fictional Party A", "state": "Other State", "constituency": "Fictional South", "profile_url": "https://example.invalid/three", "prs_image_id": "3", "permissions": {"retrieval": "allowed", "redistribution": "denied"}}
+  ],
+  "committees": [
+    {
+      "id": "fictional-standing-committee",
+      "name": "Standing Committee on Fictional Testing",
+      "type": "Standing Committee",
+      "chair": {"name": "B. Fictional Member", "role": "Chairperson", "party": "Fictional Party B", "house": "Rajya Sabha", "member_id": "rs-fictional-two"},
+      "members": [
+        {"name": "A. Fictional Member", "house": "Lok Sabha", "member_id": "ls-fictional-one"},
+        {"name": "B. Fictional Member", "house": "Rajya Sabha", "member_id": "rs-fictional-two"},
+        {"name": "Unmatched Person", "house": "Lok Sabha", "member_id": null}
+      ],
+      "source_url": "https://example.invalid/committee",
+      "permissions": {"retrieval": "allowed", "redistribution": "allowed"}
+    },
+    {
+      "id": "withheld-committee",
+      "name": "Withheld Committee",
+      "type": "Standing Committee",
+      "chair": null,
+      "members": [],
+      "source_url": "https://example.invalid/withheld",
+      "permissions": {"retrieval": "allowed", "redistribution": "denied"}
+    }
+  ],
+  "bills": [
+    {"id": "fictional-testing-bill-2026", "citizenview_id": "fictional-testing-2026", "title": "The Fictional Testing Bill, 2026", "prs_url": "https://example.invalid/bill", "committees": [{"committee_id": "fictional-standing-committee", "last_mentioned": "2026-01-01"}], "permissions": {"retrieval": "allowed", "redistribution": "allowed"}},
+    {"id": "fictional-testing-amendment-bill-2026", "citizenview_id": null, "title": "The Fictional Testing (Amendment) Bill, 2026", "prs_url": "https://example.invalid/bill2", "committees": [], "permissions": {"retrieval": "allowed", "redistribution": "allowed"}}
+  ]
+}
