@@ -19,10 +19,16 @@ https://mcp.citizenview.in/mcp
 
 Claude Code: `claude mcp add --transport http parliament-india https://mcp.citizenview.in/mcp`
 
-**Run it yourself** (needs access to this repository and [uv](https://docs.astral.sh/uv/)):
+**Run it yourself** with [uv](https://docs.astral.sh/uv/), one command:
 
 ```sh
 uvx --from git+https://github.com/lhasao/parliament-mcp-india parliament-mcp-india
+```
+
+Claude Desktop (`claude_desktop_config.json`):
+
+```json
+{ "mcpServers": { "parliament-india": { "command": "uvx", "args": ["--from", "git+https://github.com/lhasao/parliament-mcp-india", "parliament-mcp-india"] } } }
 ```
 
 ## What it answers
